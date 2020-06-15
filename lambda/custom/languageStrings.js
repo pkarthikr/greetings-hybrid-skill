@@ -8,7 +8,7 @@
 module.exports = {
     en: {
         translation: {
-            WELCOME_MSG: 'Welcome, you can say Hello or Help. Which would you like to try?',
+            WELCOME_MSG_NO_PERMISSIONS: 'Welcome to Hello Greetings, where you can listen to voice greetings from your friends. For this skill to work, I will need access to your email address and phone number. I have sent a card to your Alexa App. Please grant me permissions to that. ',
             HELLO_MSG: 'Hello World!',
             HELP_MSG: 'You can say hello to me! How can I help?',
             GOODBYE_MSG: 'Goodbye!',

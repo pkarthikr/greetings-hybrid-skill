@@ -3,38 +3,76 @@
  * Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
  * session persistence, api calls, and more.
  * */
+
+ // TODO : When the user is enabling the skill, check for permission
+
 const Alexa = require('ask-sdk-core');
 // i18n library dependency, we use it below in a localisation interceptor
 const i18n = require('i18next');
 // i18n strings for all supported locales
 const languageStrings = require('./languageStrings');
+const PERMISSIONS = ['alexa::profile:mobile_number:read', 'alexa::profile:email:read'];
+const ddbAdapter = require('ask-sdk-dynamodb-persistence-adapter');
+const ddbTableName = 'greetings-data';
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
-    handle(handlerInput) {
-        const speakOutput = handlerInput.t('WELCOME_MSG');
+    async handle(handlerInput) {
+        const attributesManager = handlerInput.attributesManager;
+        const userAttributes = await attributesManager.getPersistentAttributes() || {};
 
-        return handlerInput.responseBuilder
-            .speak(speakOutput)
-            .reprompt(speakOutput)
+        if(userAttributes.hasOwnProperty('number') || userAttributes.hasOwnProperty('email')){
+            // TODO : Check Messages Queues and if there are messages, play it.
+            return handlerInput.responseBuilder
+            .speak("Welcome to Skill. Playing your Message")
             .getResponse();
+        } else {
+            return handlerInput.responseBuilder
+            .speak(handlerInput.t('WELCOME_MSG_NO_PERMISSIONS'))
+            .withAskForPermissionsConsentCard(PERMISSIONS)
+            .getResponse();
+        }
+
+
+       
     }
 };
 
-const HelloWorldIntentHandler = {
-    canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'HelloWorldIntent';
-    },
-    handle(handlerInput) {
-        const speakOutput = handlerInput.t('HELLO_MSG');
 
-        return handlerInput.responseBuilder
-            .speak(speakOutput)
-            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
-            .getResponse();
+const SkillPermissionsHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaSkillEvent.SkillPermissionAccepted' || 
+        Alexa.getRequestType(handlerInput.requestEnvelope) === 'AlexaSkillEvent.SkillPermissionChanged'
+    },
+    async handle(handlerInput) {
+        console.log("You are in the Skill Permissions Handlers");
+        try {
+            const {serviceClientFactory} = handlerInput;
+            const client = serviceClientFactory.getUpsServiceClient();
+            const number = await client.getProfileMobileNumber();
+            const email = await client.getProfileEmail();
+
+            const attributesManager = handlerInput.attributesManager;
+
+            const userAttributes = {
+                "number": number,
+                "email": email
+                
+            };
+            attributesManager.setPersistentAttributes(userAttributes);
+            await attributesManager.savePersistentAttributes();  
+
+            // TODO : Send the SMS and Email to the user with their unique link. 
+            console.log("we reach here");
+            console.log('Number successfully retrieved, now responding to user.');
+            console.log(number);
+        } catch (error) {
+            console.log(error);
+            console.log("We do not have enough data")
+        }
+       
     }
 };
 
@@ -151,23 +189,40 @@ const LocalisationRequestInterceptor = {
         });
     }
 };
+
+const RequestLog = {
+    process(handlerInput) {
+        console.log("handlerInput");
+        console.log(handlerInput);
+    }
+}
+
+
+const ddbPersistenceAdapter = new ddbAdapter.DynamoDbPersistenceAdapter({
+    tableName: ddbTableName,
+    createTable: true,
+});
 /**
  * This handler acts as the entry point for your skill, routing all request and response
  * payloads to the handlers above. Make sure any new handlers or interceptors you've
- * defined are included below. The order matters - they're processed top to bottom 
+ * de
+ * fined are included below. The order matters - they're processed top to bottom 
  * */
 exports.handler = Alexa.SkillBuilders.custom()
     .addRequestHandlers(
         LaunchRequestHandler,
-        HelloWorldIntentHandler,
+        SkillPermissionsHandler,
         HelpIntentHandler,
         CancelAndStopIntentHandler,
         FallbackIntentHandler,
         SessionEndedRequestHandler,
         IntentReflectorHandler)
+    .withPersistenceAdapter(ddbPersistenceAdapter)
     .addErrorHandlers(
         ErrorHandler)
     .addRequestInterceptors(
-        LocalisationRequestInterceptor)
+        LocalisationRequestInterceptor,
+        RequestLog)
+    .withApiClient(new Alexa.DefaultApiClient())
     .withCustomUserAgent('sample/hello-world/v1.2')
     .lambda();

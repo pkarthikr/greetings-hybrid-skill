@@ -1,33 +1,31 @@
-# Build An Alexa Hello World Skill
-<img src="https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/quiz-game/header._TTH_.png" />
 
-### This is a simple tutorial to introduce a simple Alexa skill and code.
+U : Alexa, open hello greetings. 
+<If permissions are not granted, we ask for permissions>
+A : Welcome to Hello Greetings, where you can listen to voice greetings from your friends. For this skill to work, I will need access to your email address and phone number. I've sent a card to your Alexa App. Please grant me permissions. 
+U : <Grants permission to the skill. Webhook comes to your skill service. Generate a Unique Link for the User. Send that Unique Link to the User Email and Phone Number (SNS, Twilio)>
 
-## Skill Architecture
-Each skill consists of two basic parts, a front end and a back end.
-The front end is the voice interface, or VUI.
-The voice interface is configured through the voice interaction model.
-The back end is where the logic of your skill resides.
+SMS : Hey, Here's the link for your Voice Greetings. https://example.com/unique-id
+PIN = 3472
 
-## Three Options for Skill Setup
-There are a number of different ways for you to setup your skill, depending on your experience and what tools you have available.
+When you have a recording, just say Alexa, open Hello Greetings to listen to this. 
 
- * If this is your first skill, choose the [Alexa-Hosted backend instructions](./instructions/setup-vui-alexa-hosted.md) to get started quickly.
- * If you want to manage the backend resources in your own AWS account, you can follow the [AWS-Hosted instructions](./instructions/setup-vui-aws-hosted.md).
- * Developers with the ASK Command Line Interface configured may follow the [ASK CLI instructions](./instructions/cli.md).
+U : <Passes the link to their friends who open the website and record their audio.>
+Send a notification to the Alexa Device - hey there's a new content available in your skill. Open it. 
 
----
+U : Alexa, open hello greetings. 
+A : You have a new greeting from your friend - <plays the recording>
 
-## Additional Resources
+Other things - 
 
-### Community
-* [Amazon Developer Forums](https://forums.developer.amazon.com/spaces/165/index.html) - Join the conversation!
-* [Hackster.io](https://www.hackster.io/amazon-alexa) - See what others are building with Alexa.
+Alexa, open hello greetings and send me the link again 
+Alexa, open hello greetings and play all recordings 
 
-### Tutorials & Guides
-* [Voice Design Guide](https://developer.amazon.com/designing-for-voice/) - A great resource for learning conversational and voice user interface design.
-* [Codecademy: Learn Alexa](https://www.codecademy.com/learn/learn-alexa) - Learn how to build an Alexa Skill from within your browser with this beginner friendly tutorial on Codecademy!
+// Structure 
 
-### Documentation
-* [Official Alexa Skills Kit Node.js SDK](https://www.npmjs.com/package/ask-sdk) - The Official Node.js SDK Documentation
-*  [Official Alexa Skills Kit Documentation](https://developer.amazon.com/docs/ask-overviews/build-skills-with-the-alexa-skills-kit.html) - Official Alexa Skills Kit Documentation
+The Link will have the user's ID in some format
+https://example.com/user/xyz = where xyz = a unique code for this user (random number generator)
+
+example.com/user/abc
+
+1) Suggestion Generate = Long Alphanumeric IDs 
+2) to have a PIN code as well - which the user enters on the web page. 
