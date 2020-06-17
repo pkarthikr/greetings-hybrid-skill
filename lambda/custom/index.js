@@ -7,6 +7,7 @@
  // TODO : When the user is enabling the skill, check for permission
 
 const Alexa = require('ask-sdk-core');
+const aws = require('aws-sdk');
 // i18n library dependency, we use it below in a localisation interceptor
 const i18n = require('i18next');
 // i18n strings for all supported locales
@@ -34,9 +35,6 @@ const LaunchRequestHandler = {
             .withAskForPermissionsConsentCard(PERMISSIONS)
             .getResponse();
         }
-
-
-       
     }
 };
 
@@ -53,17 +51,56 @@ const SkillPermissionsHandler = {
             const client = serviceClientFactory.getUpsServiceClient();
             const number = await client.getProfileMobileNumber();
             const email = await client.getProfileEmail();
-
+            //TODO : Generate a unique URL for the User - https://url.com/unique-id
+            //TODO : Send that to user 
+            //TODO : How to efficiently send and set parameters within the same promise. 
             const attributesManager = handlerInput.attributesManager;
-
+            let userNumber = "+" + number.countryCode + number.phoneNumber;
             const userAttributes = {
-                "number": number,
+                "number": userNumber,
                 "email": email
                 
             };
             attributesManager.setPersistentAttributes(userAttributes);
             await attributesManager.savePersistentAttributes();  
 
+            aws.config.update({region: 'us-east-1'});
+            var setParams = {
+                attributes: { /* required */
+                  'DefaultSMSType': 'Transactional'
+                }
+            };
+
+            var setSMSTypePromise = new aws.SNS({apiVersion: '2010-03-31'}).setSMSAttributes(setParams).promise();
+
+            setSMSTypePromise.then(
+            function(data) {
+                console.log("Hello Data")
+                console.log(data);
+                var params = {
+                    Message: 'Here is your Link', /* required */
+                    PhoneNumber: userNumber,
+                    };
+        
+                    // Create promise and SNS service object
+                    var publishTextPromise = new aws.SNS({apiVersion: '2010-03-31'}).publish(params).promise();
+        
+                    // Handle promise's fulfilled/rejected states
+                    publishTextPromise.then(
+                    function(data) {
+                        console.log(JSON.stringify(data));
+                    }).catch(
+                        function(err) {
+                        console.error(err, err.stack);
+                    });
+        
+            }).catch(
+            function(err) {
+                console.log(err);
+            });
+              
+            // Create publish parameters
+          
             // TODO : Send the SMS and Email to the user with their unique link. 
             console.log("we reach here");
             console.log('Number successfully retrieved, now responding to user.');

@@ -23,7 +23,7 @@
             "codeUri": "lambda/custom",
             "functionName": "ask-custom-Hello_Greetings-default",
             "handler": "index.handler",
-            "revisionId": "79e2095d-01ec-43c8-b019-a52c9e8094d3",
+            "revisionId": "c049b354-099e-424f-8ced-c70c682c490a",
             "runtime": "nodejs10.x"
           }
         ]
